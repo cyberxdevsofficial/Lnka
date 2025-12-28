@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
 <title>Lanka Speed Checker</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 <style>
 :root{
@@ -13,6 +13,7 @@
   --muted:#8b949e;
   --blue:#2f81f7;
   --green:#3fb950;
+  --red:#ff7b72;
 }
 
 *{box-sizing:border-box}
@@ -36,7 +37,7 @@ body{
 
 .header{
   text-align:center;
-  margin-bottom:20px;
+  margin-bottom:18px;
 }
 
 .header h1{
@@ -54,7 +55,7 @@ body{
   background:var(--card);
   border-radius:16px;
   padding:24px;
-  box-shadow:0 10px 40px rgba(0,0,0,.4);
+  box-shadow:0 12px 40px rgba(0,0,0,.5);
   text-align:center;
 }
 
@@ -64,12 +65,11 @@ body{
   height:260px;
   margin:0 auto;
   border-radius:50%;
-  background:
-    conic-gradient(
-      var(--blue) 0deg,
-      var(--green) 120deg,
-      #30363d 120deg 360deg
-    );
+  background:conic-gradient(
+    var(--blue) 0deg,
+    var(--green) 120deg,
+    #30363d 120deg 360deg
+  );
   position:relative;
 }
 
@@ -85,7 +85,7 @@ body{
   position:absolute;
   width:3px;
   height:110px;
-  background:#ff7b72;
+  background:var(--red);
   left:50%;
   bottom:50%;
   transform-origin:bottom;
@@ -138,7 +138,7 @@ button:active{opacity:.9}
 
 /* ===== RESULTS ===== */
 .results{
-  margin-top:20px;
+  margin-top:18px;
   text-align:left;
 }
 .results div{
@@ -154,7 +154,7 @@ button:active{opacity:.9}
 
 .footer{
   text-align:center;
-  margin-top:18px;
+  margin-top:16px;
   font-size:12px;
   color:var(--muted);
 }
@@ -166,7 +166,7 @@ button:active{opacity:.9}
 <div class="app">
   <div class="header">
     <h1>Lanka Speed Checker</h1>
-    <span>Speedtest-style network test</span>
+    <span>Fast Internet Speed Test</span>
   </div>
 
   <div class="card">
@@ -191,28 +191,27 @@ button:active{opacity:.9}
 </div>
 
 <script>
-<script>
 const needle = document.getElementById("needle");
-const value = document.getElementById("value");
-const unit = document.getElementById("unit");
-const stage = document.getElementById("stage");
-const results = document.getElementById("results");
+const valueEl = document.getElementById("value");
+const unitEl = document.getElementById("unit");
+const stageEl = document.getElementById("stage");
+const resultsEl = document.getElementById("results");
 
 function setSpeed(v, max=100){
   if(v > max) v = max;
   const angle = (v/max)*180 - 90;
   needle.style.transform = `rotate(${angle}deg)`;
-  value.textContent = v.toFixed(1);
+  valueEl.textContent = v.toFixed(1);
 }
 
-/* FAST animation (very short) */
+/* FAST animation */
 function fastAnimate(min, max, time, label){
   return new Promise(res=>{
-    stage.textContent = label;
+    stageEl.textContent = label;
     const start = performance.now();
     (function loop(now){
       if(now - start < time){
-        setSpeed(min + Math.random() * (max - min));
+        setSpeed(min + Math.random()*(max-min));
         requestAnimationFrame(loop);
       } else res();
     })(start);
@@ -220,52 +219,51 @@ function fastAnimate(min, max, time, label){
 }
 
 async function startTest(){
-  results.innerHTML = "";
+  resultsEl.innerHTML = "";
 
-  /* ===== PING (≈ 200ms) ===== */
-  unit.textContent = "ms";
+  /* ===== PING (≈ 0.3s) ===== */
+  unitEl.textContent = "ms";
   await fastAnimate(10, 60, 300, "Ping…");
   const p0 = performance.now();
-  await fetch("https://www.cloudflare.com/cdn-cgi/trace", { cache: "no-store" });
+  await fetch("https://www.cloudflare.com/cdn-cgi/trace", { cache:"no-store" });
   const ping = Math.round(performance.now() - p0);
   setSpeed(ping, 200);
 
   /* ===== DOWNLOAD (≈ 1.5s) ===== */
-  unit.textContent = "Mbps";
+  unitEl.textContent = "Mbps";
   await fastAnimate(20, 60, 500, "Download…");
-  const dSize = 1.5 * 1024 * 1024; // 1.5MB
+  const dSize = 1.5 * 1024 * 1024;
   const d0 = performance.now();
-  await fetch("https://speed.cloudflare.com/__down?bytes=" + dSize, { cache: "no-store" });
+  await fetch("https://speed.cloudflare.com/__down?bytes=" + dSize, { cache:"no-store" });
   const download =
     dSize * 8 / ((performance.now() - d0) / 1000) / 1024 / 1024;
   setSpeed(download);
 
   /* ===== UPLOAD (≈ 1s) ===== */
   await fastAnimate(10, 40, 500, "Upload…");
-  const uData = new Blob([new ArrayBuffer(1 * 1024 * 1024)]); // 1MB
+  const uData = new Blob([new ArrayBuffer(1 * 1024 * 1024)]);
   const u0 = performance.now();
   await fetch("https://speed.cloudflare.com/__up", {
-    method: "POST",
-    body: uData,
-    cache: "no-store"
+    method:"POST",
+    body:uData,
+    cache:"no-store"
   });
   const upload =
     uData.size * 8 / ((performance.now() - u0) / 1000) / 1024 / 1024;
   setSpeed(upload);
 
-  stage.textContent = "Done";
+  stageEl.textContent = "Complete";
 
-  /* ===== PARALLEL IP INFO (does not slow test) ===== */
+  /* IP INFO (parallel, fast) */
   const ip = await fetch("https://ipapi.co/json/").then(r=>r.json());
 
-  results.innerHTML = `
+  resultsEl.innerHTML = `
     <div><span>Ping</span><b>${ping} ms</b></div>
     <div><span>Download</span><b>${download.toFixed(2)} Mbps</b></div>
     <div><span>Upload</span><b>${upload.toFixed(2)} Mbps</b></div>
     <div><span>ISP</span><b>${ip.org}</b></div>
   `;
 }
-</script>
 </script>
 
 </body>
