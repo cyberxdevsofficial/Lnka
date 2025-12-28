@@ -6,210 +6,255 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body {
-    margin: 0;
-    font-family: 'Segoe UI', sans-serif;
-    background: radial-gradient(circle at top, #0f2027, #020024, #000);
-    color: #e5e7eb;
+:root{
+  --bg:#0e1117;
+  --card:#161b22;
+  --text:#e6edf3;
+  --muted:#8b949e;
+  --blue:#2f81f7;
+  --green:#3fb950;
 }
 
-.container {
-    max-width: 520px;
-    margin: auto;
-    padding: 25px;
-    text-align: center;
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
 }
 
-h1 {
-    background: linear-gradient(90deg, #00c6ff, #7f00ff);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+.app{
+  width:100%;
+  max-width:420px;
+  padding:20px;
 }
 
-.card {
-    background: rgba(255,255,255,0.08);
-    backdrop-filter: blur(15px);
-    border-radius: 18px;
-    padding: 25px;
-    box-shadow: 0 0 40px rgba(0,198,255,0.25);
+.header{
+  text-align:center;
+  margin-bottom:20px;
 }
 
-/* ===== SPEED METER ===== */
-.meter {
-    width: 230px;
-    height: 230px;
-    margin: 20px auto;
-    border-radius: 50%;
-    position: relative;
-    background: conic-gradient(#00c6ff, #7f00ff, #111);
+.header h1{
+  font-size:22px;
+  font-weight:600;
+  margin:0;
 }
 
-.meter::after {
-    content: "";
-    position: absolute;
-    inset: 22px;
-    background: #000;
-    border-radius: 50%;
+.header span{
+  font-size:13px;
+  color:var(--muted);
 }
 
-.needle {
-    width: 4px;
-    height: 95px;
-    background: #ff4d4d;
-    position: absolute;
-    bottom: 50%;
-    left: 50%;
-    transform-origin: bottom;
-    transform: rotate(-90deg);
-    transition: transform 0.1s linear;
-    z-index: 5;
+.card{
+  background:var(--card);
+  border-radius:16px;
+  padding:24px;
+  box-shadow:0 10px 40px rgba(0,0,0,.4);
+  text-align:center;
 }
 
-.speed-text {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    z-index: 10;
+/* ===== SPEED DIAL ===== */
+.dial{
+  width:260px;
+  height:260px;
+  margin:0 auto;
+  border-radius:50%;
+  background:
+    conic-gradient(
+      var(--blue) 0deg,
+      var(--green) 120deg,
+      #30363d 120deg 360deg
+    );
+  position:relative;
 }
 
-.speed {
-    font-size: 32px;
-    font-weight: bold;
+.dial::after{
+  content:"";
+  position:absolute;
+  inset:18px;
+  background:var(--card);
+  border-radius:50%;
 }
 
-.unit {
-    font-size: 14px;
-    opacity: 0.7;
+.needle{
+  position:absolute;
+  width:3px;
+  height:110px;
+  background:#ff7b72;
+  left:50%;
+  bottom:50%;
+  transform-origin:bottom;
+  transform:rotate(-90deg);
+  transition:transform .08s linear;
+  z-index:5;
 }
 
-.status {
-    margin-top: 10px;
-    opacity: 0.85;
+.center{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  z-index:10;
 }
 
-button {
-    width: 100%;
-    padding: 14px;
-    border: none;
-    border-radius: 12px;
-    font-size: 17px;
-    font-weight: bold;
-    background: linear-gradient(135deg, #00c6ff, #7f00ff);
-    cursor: pointer;
-    margin-top: 20px;
+.value{
+  font-size:48px;
+  font-weight:700;
+  line-height:1;
 }
 
-.result p {
-    background: rgba(0,0,0,0.4);
-    padding: 10px;
-    border-radius: 10px;
-    margin: 8px 0;
-    border-left: 3px solid #00c6ff;
+.unit{
+  font-size:14px;
+  color:var(--muted);
+}
+
+.stage{
+  margin-top:10px;
+  font-size:14px;
+  color:var(--muted);
+}
+
+/* ===== BUTTON ===== */
+button{
+  width:100%;
+  margin-top:22px;
+  padding:14px;
+  border:none;
+  border-radius:12px;
+  font-size:16px;
+  font-weight:600;
+  color:#fff;
+  background:var(--blue);
+  cursor:pointer;
+}
+button:active{opacity:.9}
+
+/* ===== RESULTS ===== */
+.results{
+  margin-top:20px;
+  text-align:left;
+}
+.results div{
+  display:flex;
+  justify-content:space-between;
+  padding:8px 0;
+  font-size:14px;
+  border-bottom:1px solid #30363d;
+}
+.results span{
+  color:var(--muted);
+}
+
+.footer{
+  text-align:center;
+  margin-top:18px;
+  font-size:12px;
+  color:var(--muted);
 }
 </style>
 </head>
 
 <body>
 
-<div class="container">
-    <h1>🇱🇰 Lanka Speed Checker</h1>
+<div class="app">
+  <div class="header">
+    <h1>Lanka Speed Checker</h1>
+    <span>Speedtest-style network test</span>
+  </div>
 
-    <div class="card">
-
-        <div class="meter">
-            <div class="needle" id="needle"></div>
-            <div class="speed-text">
-                <div class="speed" id="speed">0</div>
-                <div class="unit" id="unit">Mbps</div>
-            </div>
-        </div>
-
-        <div class="status" id="status">Ready</div>
-
-        <button onclick="startTest()">⚡ Start Speed Test</button>
-
-        <div class="result" id="result"></div>
+  <div class="card">
+    <div class="dial">
+      <div class="needle" id="needle"></div>
+      <div class="center">
+        <div class="value" id="value">0</div>
+        <div class="unit" id="unit">Mbps</div>
+      </div>
     </div>
+
+    <div class="stage" id="stage">Ready</div>
+
+    <button onclick="startTest()">GO</button>
+
+    <div class="results" id="results"></div>
+  </div>
+
+  <div class="footer">
+    Developed by Anuga Senithu
+  </div>
 </div>
 
 <script>
-function moveNeedle(value, max = 100) {
-    const needle = document.getElementById("needle");
-    const speed = document.getElementById("speed");
+const needle = document.getElementById("needle");
+const value = document.getElementById("value");
+const unit = document.getElementById("unit");
+const stage = document.getElementById("stage");
+const results = document.getElementById("results");
 
-    if (value > max) value = max;
-    const angle = (value / max) * 180 - 90;
-    needle.style.transform = `rotate(${angle}deg)`;
-    speed.textContent = value.toFixed(1);
+function setSpeed(v, max=100){
+  if(v>max) v=max;
+  const angle = (v/max)*180 - 90;
+  needle.style.transform = `rotate(${angle}deg)`;
+  value.textContent = v.toFixed(1);
 }
 
-/* Smooth animation loop */
-function animateRandom(min, max, duration, label) {
-    return new Promise(resolve => {
-        const start = performance.now();
-        const loop = now => {
-            const progress = (now - start) / duration;
-            if (progress < 1) {
-                const value = min + Math.random() * (max - min);
-                moveNeedle(value);
-                document.getElementById("status").textContent = label;
-                requestAnimationFrame(loop);
-            } else {
-                resolve();
-            }
-        };
+function animate(min,max,time,label){
+  return new Promise(res=>{
+    const start=performance.now();
+    (function loop(now){
+      const p=(now-start)/time;
+      if(p<1){
+        setSpeed(min+Math.random()*(max-min));
+        stage.textContent=label;
         requestAnimationFrame(loop);
-    });
+      } else res();
+    })(start);
+  });
 }
 
-async function startTest() {
-    const result = document.getElementById("result");
-    const status = document.getElementById("status");
-    result.innerHTML = "";
+async function startTest(){
+  results.innerHTML="";
 
-    /* ===== PING ===== */
-    document.getElementById("unit").textContent = "ms";
-    await animateRandom(10, 80, 1200, "Testing Ping...");
-    const pStart = performance.now();
-    await fetch("https://www.cloudflare.com/cdn-cgi/trace");
-    const ping = Math.round(performance.now() - pStart);
-    moveNeedle(ping, 200);
+  unit.textContent="ms";
+  await animate(10,80,1200,"Testing Ping…");
+  const p0=performance.now();
+  await fetch("https://www.cloudflare.com/cdn-cgi/trace");
+  const ping=Math.round(performance.now()-p0);
+  setSpeed(ping,200);
 
-    /* ===== DOWNLOAD ===== */
-    document.getElementById("unit").textContent = "Mbps";
-    await animateRandom(5, 40, 2000, "Testing Download...");
-    const dSize = 6 * 1024 * 1024;
-    const dStart = performance.now();
-    await fetch("https://speed.cloudflare.com/__down?bytes=" + dSize);
-    const dTime = (performance.now() - dStart) / 1000;
-    const download = dSize * 8 / dTime / 1024 / 1024;
-    moveNeedle(download);
+  unit.textContent="Mbps";
+  await animate(10,50,2000,"Testing Download…");
+  const dSize=6*1024*1024;
+  const d0=performance.now();
+  await fetch("https://speed.cloudflare.com/__down?bytes="+dSize);
+  const download=dSize*8/((performance.now()-d0)/1000)/1024/1024;
+  setSpeed(download);
 
-    /* ===== UPLOAD ===== */
-    await animateRandom(3, 30, 2000, "Testing Upload...");
-    const uData = new Blob([new ArrayBuffer(4 * 1024 * 1024)]);
-    const uStart = performance.now();
-    await fetch("https://speed.cloudflare.com/__up", { method: "POST", body: uData });
-    const uTime = (performance.now() - uStart) / 1000;
-    const upload = uData.size * 8 / uTime / 1024 / 1024;
-    moveNeedle(upload);
+  await animate(5,35,2000,"Testing Upload…");
+  const uData=new Blob([new ArrayBuffer(4*1024*1024)]);
+  const u0=performance.now();
+  await fetch("https://speed.cloudflare.com/__up",{method:"POST",body:uData});
+  const upload=uData.size*8/((performance.now()-u0)/1000)/1024/1024;
+  setSpeed(upload);
 
-    status.textContent = "Test Complete";
+  stage.textContent="Complete";
 
-    const ip = await fetch("https://ipapi.co/json/").then(r => r.json());
+  const ip=await fetch("https://ipapi.co/json/").then(r=>r.json());
 
-    result.innerHTML = `
-        <p>⏱ Ping: <b>${ping} ms</b></p>
-        <p>⬇ Download: <b>${download.toFixed(2)} Mbps</b></p>
-        <p>⬆ Upload: <b>${upload.toFixed(2)} Mbps</b></p>
-        <p>🌐 IP: <b>${ip.ip}</b></p>
-        <p>🏢 ISP: <b>${ip.org}</b></p>
-    `;
+  results.innerHTML=`
+    <div><span>Ping</span><b>${ping} ms</b></div>
+    <div><span>Download</span><b>${download.toFixed(2)} Mbps</b></div>
+    <div><span>Upload</span><b>${upload.toFixed(2)} Mbps</b></div>
+    <div><span>ISP</span><b>${ip.org}</b></div>
+  `;
 }
 </script>
 
 </body>
-  </html>
+</html>
