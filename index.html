@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Lanka Speed Checker</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: radial-gradient(circle at top, #0f2027, #020024, #000);
+    color: #e5e7eb;
+}
+
+.container {
+    max-width: 520px;
+    margin: auto;
+    padding: 25px;
+    text-align: center;
+}
+
+h1 {
+    background: linear-gradient(90deg, #00c6ff, #7f00ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.card {
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(15px);
+    border-radius: 18px;
+    padding: 25px;
+    box-shadow: 0 0 40px rgba(0,198,255,0.25);
+}
+
+/* ===== SPEED METER ===== */
+.meter {
+    width: 230px;
+    height: 230px;
+    margin: 20px auto;
+    border-radius: 50%;
+    position: relative;
+    background: conic-gradient(#00c6ff, #7f00ff, #111);
+}
+
+.meter::after {
+    content: "";
+    position: absolute;
+    inset: 22px;
+    background: #000;
+    border-radius: 50%;
+}
+
+.needle {
+    width: 4px;
+    height: 95px;
+    background: #ff4d4d;
+    position: absolute;
+    bottom: 50%;
+    left: 50%;
+    transform-origin: bottom;
+    transform: rotate(-90deg);
+    transition: transform 0.1s linear;
+    z-index: 5;
+}
+
+.speed-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    z-index: 10;
+}
+
+.speed {
+    font-size: 32px;
+    font-weight: bold;
+}
+
+.unit {
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+.status {
+    margin-top: 10px;
+    opacity: 0.85;
+}
+
+button {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-size: 17px;
+    font-weight: bold;
+    background: linear-gradient(135deg, #00c6ff, #7f00ff);
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+.result p {
+    background: rgba(0,0,0,0.4);
+    padding: 10px;
+    border-radius: 10px;
+    margin: 8px 0;
+    border-left: 3px solid #00c6ff;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>🇱🇰 Lanka Speed Checker</h1>
+
+    <div class="card">
+
+        <div class="meter">
+            <div class="needle" id="needle"></div>
+            <div class="speed-text">
+                <div class="speed" id="speed">0</div>
+                <div class="unit" id="unit">Mbps</div>
+            </div>
+        </div>
+
+        <div class="status" id="status">Ready</div>
+
+        <button onclick="startTest()">⚡ Start Speed Test</button>
+
+        <div class="result" id="result"></div>
+    </div>
+</div>
+
+<script>
+function moveNeedle(value, max = 100) {
+    const needle = document.getElementById("needle");
+    const speed = document.getElementById("speed");
+
+    if (value > max) value = max;
+    const angle = (value / max) * 180 - 90;
+    needle.style.transform = `rotate(${angle}deg)`;
+    speed.textContent = value.toFixed(1);
+}
+
+/* Smooth animation loop */
+function animateRandom(min, max, duration, label) {
+    return new Promise(resolve => {
+        const start = performance.now();
+        const loop = now => {
+            const progress = (now - start) / duration;
+            if (progress < 1) {
+                const value = min + Math.random() * (max - min);
+                moveNeedle(value);
+                document.getElementById("status").textContent = label;
+                requestAnimationFrame(loop);
+            } else {
+                resolve();
+            }
+        };
+        requestAnimationFrame(loop);
+    });
+}
+
+async function startTest() {
+    const result = document.getElementById("result");
+    const status = document.getElementById("status");
+    result.innerHTML = "";
+
+    /* ===== PING ===== */
+    document.getElementById("unit").textContent = "ms";
+    await animateRandom(10, 80, 1200, "Testing Ping...");
+    const pStart = performance.now();
+    await fetch("https://www.cloudflare.com/cdn-cgi/trace");
+    const ping = Math.round(performance.now() - pStart);
+    moveNeedle(ping, 200);
+
+    /* ===== DOWNLOAD ===== */
+    document.getElementById("unit").textContent = "Mbps";
+    await animateRandom(5, 40, 2000, "Testing Download...");
+    const dSize = 6 * 1024 * 1024;
+    const dStart = performance.now();
+    await fetch("https://speed.cloudflare.com/__down?bytes=" + dSize);
+    const dTime = (performance.now() - dStart) / 1000;
+    const download = dSize * 8 / dTime / 1024 / 1024;
+    moveNeedle(download);
+
+    /* ===== UPLOAD ===== */
+    await animateRandom(3, 30, 2000, "Testing Upload...");
+    const uData = new Blob([new ArrayBuffer(4 * 1024 * 1024)]);
+    const uStart = performance.now();
+    await fetch("https://speed.cloudflare.com/__up", { method: "POST", body: uData });
+    const uTime = (performance.now() - uStart) / 1000;
+    const upload = uData.size * 8 / uTime / 1024 / 1024;
+    moveNeedle(upload);
+
+    status.textContent = "Test Complete";
+
+    const ip = await fetch("https://ipapi.co/json/").then(r => r.json());
+
+    result.innerHTML = `
+        <p>⏱ Ping: <b>${ping} ms</b></p>
+        <p>⬇ Download: <b>${download.toFixed(2)} Mbps</b></p>
+        <p>⬆ Upload: <b>${upload.toFixed(2)} Mbps</b></p>
+        <p>🌐 IP: <b>${ip.ip}</b></p>
+        <p>🏢 ISP: <b>${ip.org}</b></p>
+    `;
+}
+</script>
+
+</body>
+  </html>
