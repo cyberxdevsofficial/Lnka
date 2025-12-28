@@ -191,6 +191,7 @@ button:active{opacity:.9}
 </div>
 
 <script>
+<script>
 const needle = document.getElementById("needle");
 const value = document.getElementById("value");
 const unit = document.getElementById("unit");
@@ -198,20 +199,20 @@ const stage = document.getElementById("stage");
 const results = document.getElementById("results");
 
 function setSpeed(v, max=100){
-  if(v>max) v=max;
+  if(v > max) v = max;
   const angle = (v/max)*180 - 90;
   needle.style.transform = `rotate(${angle}deg)`;
   value.textContent = v.toFixed(1);
 }
 
-function animate(min,max,time,label){
+/* FAST animation (very short) */
+function fastAnimate(min, max, time, label){
   return new Promise(res=>{
-    const start=performance.now();
+    stage.textContent = label;
+    const start = performance.now();
     (function loop(now){
-      const p=(now-start)/time;
-      if(p<1){
-        setSpeed(min+Math.random()*(max-min));
-        stage.textContent=label;
+      if(now - start < time){
+        setSpeed(min + Math.random() * (max - min));
         requestAnimationFrame(loop);
       } else res();
     })(start);
@@ -219,41 +220,52 @@ function animate(min,max,time,label){
 }
 
 async function startTest(){
-  results.innerHTML="";
+  results.innerHTML = "";
 
-  unit.textContent="ms";
-  await animate(10,80,1200,"Testing Ping…");
-  const p0=performance.now();
-  await fetch("https://www.cloudflare.com/cdn-cgi/trace");
-  const ping=Math.round(performance.now()-p0);
-  setSpeed(ping,200);
+  /* ===== PING (≈ 200ms) ===== */
+  unit.textContent = "ms";
+  await fastAnimate(10, 60, 300, "Ping…");
+  const p0 = performance.now();
+  await fetch("https://www.cloudflare.com/cdn-cgi/trace", { cache: "no-store" });
+  const ping = Math.round(performance.now() - p0);
+  setSpeed(ping, 200);
 
-  unit.textContent="Mbps";
-  await animate(10,50,2000,"Testing Download…");
-  const dSize=6*1024*1024;
-  const d0=performance.now();
-  await fetch("https://speed.cloudflare.com/__down?bytes="+dSize);
-  const download=dSize*8/((performance.now()-d0)/1000)/1024/1024;
+  /* ===== DOWNLOAD (≈ 1.5s) ===== */
+  unit.textContent = "Mbps";
+  await fastAnimate(20, 60, 500, "Download…");
+  const dSize = 1.5 * 1024 * 1024; // 1.5MB
+  const d0 = performance.now();
+  await fetch("https://speed.cloudflare.com/__down?bytes=" + dSize, { cache: "no-store" });
+  const download =
+    dSize * 8 / ((performance.now() - d0) / 1000) / 1024 / 1024;
   setSpeed(download);
 
-  await animate(5,35,2000,"Testing Upload…");
-  const uData=new Blob([new ArrayBuffer(4*1024*1024)]);
-  const u0=performance.now();
-  await fetch("https://speed.cloudflare.com/__up",{method:"POST",body:uData});
-  const upload=uData.size*8/((performance.now()-u0)/1000)/1024/1024;
+  /* ===== UPLOAD (≈ 1s) ===== */
+  await fastAnimate(10, 40, 500, "Upload…");
+  const uData = new Blob([new ArrayBuffer(1 * 1024 * 1024)]); // 1MB
+  const u0 = performance.now();
+  await fetch("https://speed.cloudflare.com/__up", {
+    method: "POST",
+    body: uData,
+    cache: "no-store"
+  });
+  const upload =
+    uData.size * 8 / ((performance.now() - u0) / 1000) / 1024 / 1024;
   setSpeed(upload);
 
-  stage.textContent="Complete";
+  stage.textContent = "Done";
 
-  const ip=await fetch("https://ipapi.co/json/").then(r=>r.json());
+  /* ===== PARALLEL IP INFO (does not slow test) ===== */
+  const ip = await fetch("https://ipapi.co/json/").then(r=>r.json());
 
-  results.innerHTML=`
+  results.innerHTML = `
     <div><span>Ping</span><b>${ping} ms</b></div>
     <div><span>Download</span><b>${download.toFixed(2)} Mbps</b></div>
     <div><span>Upload</span><b>${upload.toFixed(2)} Mbps</b></div>
     <div><span>ISP</span><b>${ip.org}</b></div>
   `;
 }
+</script>
 </script>
 
 </body>
