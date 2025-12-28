@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8">
 <title>Lanka Speed Checker</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 :root{
@@ -22,7 +22,7 @@ body{
   margin:0;
   background:var(--bg);
   color:var(--text);
-  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto;
   display:flex;
   justify-content:center;
   align-items:center;
@@ -37,13 +37,13 @@ body{
 
 .header{
   text-align:center;
-  margin-bottom:18px;
+  margin-bottom:16px;
 }
 
 .header h1{
+  margin:0;
   font-size:22px;
   font-weight:600;
-  margin:0;
 }
 
 .header span{
@@ -61,8 +61,8 @@ body{
 
 /* ===== SPEED DIAL ===== */
 .dial{
-  width:260px;
-  height:260px;
+  width:240px;
+  height:240px;
   margin:0 auto;
   border-radius:50%;
   background:conic-gradient(
@@ -84,7 +84,7 @@ body{
 .needle{
   position:absolute;
   width:3px;
-  height:110px;
+  height:105px;
   background:var(--red);
   left:50%;
   bottom:50%;
@@ -98,16 +98,15 @@ body{
   position:absolute;
   inset:0;
   display:flex;
+  flex-direction:column;
   align-items:center;
   justify-content:center;
-  flex-direction:column;
   z-index:10;
 }
 
 .value{
-  font-size:48px;
+  font-size:44px;
   font-weight:700;
-  line-height:1;
 }
 
 .unit{
@@ -116,45 +115,46 @@ body{
 }
 
 .stage{
-  margin-top:10px;
+  margin-top:8px;
   font-size:14px;
+  color:var(--muted);
+}
+
+/* ===== STATUS LIST ===== */
+.status-list{
+  margin-top:18px;
+  text-align:left;
+}
+
+.status-row{
+  display:flex;
+  justify-content:space-between;
+  padding:8px 0;
+  border-bottom:1px solid #30363d;
+  font-size:14px;
+}
+
+.status-row span{
   color:var(--muted);
 }
 
 /* ===== BUTTON ===== */
 button{
   width:100%;
-  margin-top:22px;
+  margin-top:18px;
   padding:14px;
   border:none;
   border-radius:12px;
   font-size:16px;
   font-weight:600;
-  color:#fff;
   background:var(--blue);
+  color:#fff;
   cursor:pointer;
-}
-button:active{opacity:.9}
-
-/* ===== RESULTS ===== */
-.results{
-  margin-top:18px;
-  text-align:left;
-}
-.results div{
-  display:flex;
-  justify-content:space-between;
-  padding:8px 0;
-  font-size:14px;
-  border-bottom:1px solid #30363d;
-}
-.results span{
-  color:var(--muted);
 }
 
 .footer{
   text-align:center;
-  margin-top:16px;
+  margin-top:14px;
   font-size:12px;
   color:var(--muted);
 }
@@ -166,10 +166,11 @@ button:active{opacity:.9}
 <div class="app">
   <div class="header">
     <h1>Lanka Speed Checker</h1>
-    <span>Fast Internet Speed Test</span>
+    <span>Fast Network Test</span>
   </div>
 
   <div class="card">
+
     <div class="dial">
       <div class="needle" id="needle"></div>
       <div class="center">
@@ -180,9 +181,15 @@ button:active{opacity:.9}
 
     <div class="stage" id="stage">Ready</div>
 
-    <button onclick="startTest()">GO</button>
+    <!-- ALWAYS VISIBLE STATUS -->
+    <div class="status-list">
+      <div class="status-row"><span>Ping</span><b id="s-ping">----</b></div>
+      <div class="status-row"><span>Download</span><b id="s-down">----</b></div>
+      <div class="status-row"><span>Upload</span><b id="s-up">----</b></div>
+      <div class="status-row"><span>ISP</span><b id="s-isp">----</b></div>
+    </div>
 
-    <div class="results" id="results"></div>
+    <button onclick="startTest()">GO</button>
   </div>
 
   <div class="footer">
@@ -195,16 +202,18 @@ const needle = document.getElementById("needle");
 const valueEl = document.getElementById("value");
 const unitEl = document.getElementById("unit");
 const stageEl = document.getElementById("stage");
-const resultsEl = document.getElementById("results");
+
+const sPing = document.getElementById("s-ping");
+const sDown = document.getElementById("s-down");
+const sUp = document.getElementById("s-up");
+const sIsp = document.getElementById("s-isp");
 
 function setSpeed(v, max=100){
   if(v > max) v = max;
-  const angle = (v/max)*180 - 90;
-  needle.style.transform = `rotate(${angle}deg)`;
+  needle.style.transform = `rotate(${(v/max)*180 - 90}deg)`;
   valueEl.textContent = v.toFixed(1);
 }
 
-/* FAST animation */
 function fastAnimate(min, max, time, label){
   return new Promise(res=>{
     stageEl.textContent = label;
@@ -219,50 +228,45 @@ function fastAnimate(min, max, time, label){
 }
 
 async function startTest(){
-  resultsEl.innerHTML = "";
+  // SET ALL TO CHECKING
+  sPing.textContent = "Checking";
+  sDown.textContent = "Checking";
+  sUp.textContent = "Checking";
+  sIsp.textContent = "Checking";
 
-  /* ===== PING (≈ 0.3s) ===== */
+  /* ===== PING ===== */
   unitEl.textContent = "ms";
-  await fastAnimate(10, 60, 300, "Ping…");
+  await fastAnimate(10,60,300,"Ping…");
   const p0 = performance.now();
-  await fetch("https://www.cloudflare.com/cdn-cgi/trace", { cache:"no-store" });
-  const ping = Math.round(performance.now() - p0);
-  setSpeed(ping, 200);
+  await fetch("https://www.cloudflare.com/cdn-cgi/trace",{cache:"no-store"});
+  const ping = Math.round(performance.now()-p0);
+  setSpeed(ping,200);
+  sPing.textContent = ping + " ms";
 
-  /* ===== DOWNLOAD (≈ 1.5s) ===== */
+  /* ===== DOWNLOAD ===== */
   unitEl.textContent = "Mbps";
-  await fastAnimate(20, 60, 500, "Download…");
-  const dSize = 1.5 * 1024 * 1024;
+  await fastAnimate(20,60,500,"Download…");
+  const dSize = 1.5*1024*1024;
   const d0 = performance.now();
-  await fetch("https://speed.cloudflare.com/__down?bytes=" + dSize, { cache:"no-store" });
-  const download =
-    dSize * 8 / ((performance.now() - d0) / 1000) / 1024 / 1024;
-  setSpeed(download);
+  await fetch("https://speed.cloudflare.com/__down?bytes="+dSize,{cache:"no-store"});
+  const down = dSize*8/((performance.now()-d0)/1000)/1024/1024;
+  setSpeed(down);
+  sDown.textContent = down.toFixed(2) + " Mbps";
 
-  /* ===== UPLOAD (≈ 1s) ===== */
-  await fastAnimate(10, 40, 500, "Upload…");
-  const uData = new Blob([new ArrayBuffer(1 * 1024 * 1024)]);
+  /* ===== UPLOAD ===== */
+  await fastAnimate(10,40,500,"Upload…");
+  const uData = new Blob([new ArrayBuffer(1024*1024)]);
   const u0 = performance.now();
-  await fetch("https://speed.cloudflare.com/__up", {
-    method:"POST",
-    body:uData,
-    cache:"no-store"
-  });
-  const upload =
-    uData.size * 8 / ((performance.now() - u0) / 1000) / 1024 / 1024;
-  setSpeed(upload);
+  await fetch("https://speed.cloudflare.com/__up",{method:"POST",body:uData});
+  const up = uData.size*8/((performance.now()-u0)/1000)/1024/1024;
+  setSpeed(up);
+  sUp.textContent = up.toFixed(2) + " Mbps";
 
-  stageEl.textContent = "Complete";
-
-  /* IP INFO (parallel, fast) */
+  /* ===== ISP ===== */
   const ip = await fetch("https://ipapi.co/json/").then(r=>r.json());
+  sIsp.textContent = ip.org || "Unknown";
 
-  resultsEl.innerHTML = `
-    <div><span>Ping</span><b>${ping} ms</b></div>
-    <div><span>Download</span><b>${download.toFixed(2)} Mbps</b></div>
-    <div><span>Upload</span><b>${upload.toFixed(2)} Mbps</b></div>
-    <div><span>ISP</span><b>${ip.org}</b></div>
-  `;
+  stageEl.textContent = "Completed";
 }
 </script>
 
